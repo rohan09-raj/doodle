@@ -11,7 +11,7 @@ let userActivity = [];
 
 const server = http.createServer();
 const wsServer = new WebSocketServer({ server });
-server.listen(port, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
