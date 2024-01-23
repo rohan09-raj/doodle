@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
-const Button = ({text}) => {
-  return <button>{text}</button>;
+const Button = ({text, onClick}) => {
+  return <button onClick={() => onClick()}>{text}</button>;
 };
 
 export default Button;

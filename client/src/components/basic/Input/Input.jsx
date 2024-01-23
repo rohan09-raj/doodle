@@ -1,6 +1,7 @@
-const Input = () => {
+/* eslint-disable react/prop-types */
+const Input = ({onInput}) => {
   return (
-    <input type="text" />
+    <input type="text" onInput={(event) => onInput(event)} />
   )
 }
 
