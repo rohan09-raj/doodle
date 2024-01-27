@@ -20,8 +20,6 @@ const Canvas = () => {
   useEffect(() => {
     if (lastJsonMessage) {
       setLines(lastJsonMessage.data.canvasData);
-    } else {
-      setLines([]);
     }
   }, [lastJsonMessage]);
 
@@ -52,6 +50,7 @@ const Canvas = () => {
 
     // replace last
     lines.splice(lines.length - 1, 1, lastLine);
+    setLines(lines.concat());
     handleLineChange();
   };
 
