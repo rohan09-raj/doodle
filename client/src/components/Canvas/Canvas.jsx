@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Line, Text } from "react-konva";
 import useWebSocket from "react-use-websocket";
 
-import { isDrawEvent } from "../../utils/utils";
+import event from "../../utils/event";
 import { EVENT, WS_URL } from "../../constants/constants";
 
 import styles from "./Canvas.module.css";
@@ -14,20 +14,18 @@ const Canvas = () => {
 
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(WS_URL, {
     share: true,
-    filter: isDrawEvent,
+    filter: event.isDrawEvent,
   });
 
   useEffect(() => {
-    console.log(lastJsonMessage);
     if (lastJsonMessage) {
-      setLines(lastJsonMessage.data.editorContent);
+      setLines(lastJsonMessage.data.canvasData);
     } else {
       setLines([]);
     }
   }, [lastJsonMessage]);
 
-  const handleLineChange = (lines) => {
-    setLines(lines.concat());
+  const handleLineChange = () => {
     sendJsonMessage({
       type: EVENT.DRAW,
       content: lines,
@@ -38,7 +36,7 @@ const Canvas = () => {
     isDrawing.current = true;
     const pos = e.target.getStage().getPointerPosition();
     setLines([...lines, { tool, points: [pos.x, pos.y] }]);
-    handleLineChange(lines);
+    handleLineChange();
   };
 
   const handleMouseMove = (e) => {
@@ -54,7 +52,7 @@ const Canvas = () => {
 
     // replace last
     lines.splice(lines.length - 1, 1, lastLine);
-    handleLineChange(lines);
+    handleLineChange();
   };
 
   const handleMouseUp = () => {

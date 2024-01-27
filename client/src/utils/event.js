@@ -1,4 +1,4 @@
-import { EVENT } from "../constants/eventType";
+import { EVENT } from "../constants/constants.js";
 
 const isUserEvent = (message) => {
   const event = JSON.parse(message.data);
