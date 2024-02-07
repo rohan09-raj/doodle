@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Line, Text } from "react-konva";
+import { Stage, Layer, Line } from "react-konva";
 import useWebSocket from "react-use-websocket";
 
 import event from "../../utils/event";
@@ -59,33 +59,35 @@ const Canvas = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <Stage
-        width={window.innerWidth/2}
-        height={window.innerHeight/2}
-        onMouseDown={handleMouseDown}
-        onMousemove={handleMouseMove}
-        onMouseup={handleMouseUp}
-      >
-        <Layer>
-          <Text text="Just start drawing" x={5} y={30} />
-          {lines.map((line, i) => (
-            <Line
-              key={i}
-              points={line.points}
-              stroke="#df4b26"
-              strokeWidth={5}
-              tension={0.5}
-              lineCap="round"
-              lineJoin="round"
-              globalCompositeOperation={
-                line.tool === "eraser" ? "destination-out" : "source-over"
-              }
-            />
-          ))}
-        </Layer>
-      </Stage>
+    <div className={styles.canvas}>
+      <div className={styles.canvas__stage}>
+        <Stage
+          width={window.innerWidth / 2}
+          height={window.innerHeight / 2}
+          onMouseDown={handleMouseDown}
+          onMousemove={handleMouseMove}
+          onMouseup={handleMouseUp}
+        >
+          <Layer>
+            {lines.map((line, i) => (
+              <Line
+                key={i}
+                points={line.points}
+                stroke="#df4b26"
+                strokeWidth={5}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+                globalCompositeOperation={
+                  line.tool === "eraser" ? "destination-out" : "source-over"
+                }
+              />
+            ))}
+          </Layer>
+        </Stage>
+      </div>
       <select
+        className={styles.canvas__controls}
         value={tool}
         onChange={(e) => {
           setTool(e.target.value);

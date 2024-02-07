@@ -33,6 +33,7 @@ h1 {
 }
 
 input,
-button {
+button,
+select {
   font-family: "Darker Grotesque", sans-serif;
 }

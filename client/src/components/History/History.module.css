@@ -9,6 +9,7 @@
 
 .history__item {
   display: flex;
+  padding: 0 var(--spacing-small-l);
   border: 1px solid var(--color-grey-black);
 }
 
