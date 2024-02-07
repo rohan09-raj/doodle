@@ -61,8 +61,8 @@ const Canvas = () => {
   return (
     <div className={styles.container}>
       <Stage
-        width={window.innerWidth / 2}
-        height={window.innerHeight}
+        width={window.innerWidth/2}
+        height={window.innerHeight/2}
         onMouseDown={handleMouseDown}
         onMousemove={handleMouseMove}
         onMouseup={handleMouseUp}

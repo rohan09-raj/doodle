@@ -5,6 +5,8 @@ import { WS_URL } from "../../constants/constants";
 import Login from "../../components/Login/Login";
 import PlayArea from "../PlayArea/PlayArea";
 
+import styles from "./Home.module.css";
+
 const Home = () => {
   const [username, setUsername] = useState("");
   const { sendJsonMessage, readyState } = useWebSocket(WS_URL, {
@@ -27,9 +29,10 @@ const Home = () => {
   }, [username, sendJsonMessage, readyState]);
 
   return (
-    <>
+    <div className={styles.home}>
+      <h1 className={styles.home__heading}>Doodle</h1>
       <div>{username ? <PlayArea /> : <Login onPlay={setUsername} />}</div>
-    </>
+    </div>
   );
 };
 

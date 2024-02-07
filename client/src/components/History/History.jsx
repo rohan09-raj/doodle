@@ -3,6 +3,8 @@ import useWebSocket from "react-use-websocket";
 import event from "../../utils/event.js";
 import { WS_URL } from "../../constants/constants.js";
 
+import styles from "./History.module.css";
+
 const History = () => {
   const { lastJsonMessage } = useWebSocket(WS_URL, {
     share: true,
@@ -10,11 +12,13 @@ const History = () => {
   });
   const activities = lastJsonMessage?.data.userActivity || [];
   return (
-    <ul>
+    <div className={styles.history}>
       {activities.map((activity, index) => (
-        <li key={`activity-${index}`}>{activity}</li>
+        <div key={`activity-${index}`} className={styles.history__item}>
+          <p>{activity}</p>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 };
 

@@ -1,9 +1,11 @@
 @import "../../../variables.css";
 
 .card {
-    display: flex;
-    flex-direction: column;
-    padding: var(--spacing-medium-xl);
-    border-radius: var(--border-radius);
-    background-color: var(--color-white);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--spacing-medium-xl);
+  padding: var(--spacing-medium-xl);
+  border-radius: var(--border-radius-20);
+  background-color: var(--color-white);
 }
