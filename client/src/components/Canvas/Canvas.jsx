@@ -37,7 +37,6 @@ const Canvas = () => {
     isDrawing.current = true;
     const pos = e.target.getStage().getPointerPosition();
     setLines([...lines, { tool, points: [pos.x, pos.y] }]);
-    handleLineChange();
   };
 
   const handleMouseMove = (e) => {
@@ -54,11 +53,11 @@ const Canvas = () => {
     // replace last
     lines.splice(lines.length - 1, 1, lastLine);
     setLines(lines.concat());
-    handleLineChange();
   };
 
   const handleMouseUp = () => {
     isDrawing.current = false;
+    handleLineChange();
   };
 
   return (
