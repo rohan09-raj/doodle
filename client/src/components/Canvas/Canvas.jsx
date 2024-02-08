@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Line } from "react-konva";
 import useWebSocket from "react-use-websocket";
+import { MdModeEdit } from "react-icons/md";
+import { BsEraserFill } from "react-icons/bs";
 
 import event from "../../utils/event";
 import { EVENT, WS_URL } from "../../constants/constants";
 
 import styles from "./Canvas.module.css";
+import IconButton from "../basic/IconButton/IconButton";
 
 const Canvas = () => {
   const [tool, setTool] = useState("pen");
@@ -86,16 +89,23 @@ const Canvas = () => {
           </Layer>
         </Stage>
       </div>
-      <select
-        className={styles.canvas__controls}
-        value={tool}
-        onChange={(e) => {
-          setTool(e.target.value);
-        }}
-      >
-        <option value="pen">Pen</option>
-        <option value="eraser">Eraser</option>
-      </select>
+      <div className={styles.canvas__controls}>
+        <IconButton
+          isSelected={tool === "pen"}
+          icon={<MdModeEdit size={20} />}
+          onClick={() => {
+            setTool("pen");
+          }}
+        />
+
+        <IconButton
+          isSelected={tool === "eraser"}
+          icon={<BsEraserFill size={20} />}
+          onClick={() => {
+            setTool("eraser");
+          }}
+        />
+      </div>
     </div>
   );
 };

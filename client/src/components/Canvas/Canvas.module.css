@@ -10,5 +10,10 @@
 }
 
 .canvas__controls {
+  display: flex;
+  padding: var(--spacing-medium);
+  justify-content: space-between;
+  background-color: var(--color-white);
   margin-top: var(--spacing-medium);
+  border-radius: var(--border-radius-10);
 }
