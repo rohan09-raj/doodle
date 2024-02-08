@@ -33,6 +33,14 @@ const Canvas = () => {
     });
   };
 
+  const handleClear = () => {
+    setLines([]);
+    sendJsonMessage({
+      type: EVENT.DRAW,
+      content: [],
+    });
+  }
+
   const handleMouseDown = (e) => {
     isDrawing.current = true;
     const pos = e.target.getStage().getPointerPosition();
@@ -98,10 +106,9 @@ const Canvas = () => {
         />
 
         <IconButton
-          isSelected={tool === "eraser"}
           icon={<BsEraserFill size={20} />}
           onClick={() => {
-            setTool("eraser");
+            handleClear();
           }}
         />
       </div>
