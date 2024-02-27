@@ -1,38 +1,35 @@
-import { useState, useEffect } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useState, useEffect, useRef } from "react";
+import io from "socket.io-client";
 
 import { WS_URL } from "../../constants/constants";
 import Login from "../../components/Login/Login";
 import PlayArea from "../PlayArea/PlayArea";
+import { GuessListProvider } from "../../context/GuessListContext";
 
 import styles from "./Home.module.css";
 
 const Home = () => {
-  const [username, setUsername] = useState("");
-  const { sendJsonMessage, readyState } = useWebSocket(WS_URL, {
-    onOpen: () => {
-      console.log("WebSocket connection established.");
-    },
-    share: true,
-    filter: () => false,
-    retryOnError: true,
-    shouldReconnect: () => true,
-  });
+  const [game, setGame] = useState(false);
+  const [wait, setWait] = useState(true);
+  const socketRef = useRef(null);
 
   useEffect(() => {
-    if (username && readyState === ReadyState.OPEN) {
-      sendJsonMessage({
-        username,
-        type: "userevent",
-      });
-    }
-  }, [username, sendJsonMessage, readyState]);
+    socketRef.current = io(WS_URL, { transports: ["websocket"] });
+  }, []);
 
   return (
-    <div className={styles.home}>
-      <h1 className={styles.home__heading}>Doodle</h1>
-      <div>{username ? <PlayArea /> : <Login onPlay={setUsername} />}</div>
-    </div>
+    <GuessListProvider>
+      <div className={styles.home}>
+        <h1 className={styles.home__heading}>Doodle</h1>
+        <div>
+          {game ? (
+            <PlayArea socketRef={socketRef} wait={wait} setWait={setWait} />
+          ) : (
+            <Login socketRef={socketRef} setGame={setGame} />
+          )}
+        </div>
+      </div>
+    </GuessListProvider>
   );
 };
 
