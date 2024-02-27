@@ -1,31 +1,47 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
-import useWebSocket from "react-use-websocket";
+import { useContext, useState } from "react";
 
 import Card from "../basic/Card/Card";
 import Input from "../basic/Input/Input";
 import Button from "../basic/Button/Button";
 
-import { WS_URL } from "../../constants/constants";
+import { SOCKET_EVENTS } from "../../constants/constants";
+import { UserContext } from "../../context/UserContext";
+import { UsersContext } from "../../context/UsersContext";
 
-const Login = ({onPlay}) => {
-  const[username, setUsername] = useState("");
-
-  useWebSocket(WS_URL, {
-    share: true,
-    filter: () => false,
-  })
+const Login = ({ socketRef, setGame }) => {
+  const [user, setUser] = useContext(UserContext);
+  const [users, setUsers] = useContext(UsersContext);
+  const [error, setError] = useState("");
 
   const onHandlePlay = () => {
-    if (!username.trim()) return;
-    onPlay && onPlay(username);
-  }
+    if (!user.username.trim()) {
+      setError("Please enter your name!");
+      return;
+    }
+
+    socketRef.current.emit(SOCKET_EVENTS.JOIN, user, (result) => {
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setError("");
+        setGame(true);
+        setUsers(result.allUsers);
+      }
+    });
+  };
 
   return (
     <Card>
-      <Input onInput={(event) => setUsername(event.target.value)} />
+      <Input
+        onInput={(event) =>
+          setUser((prev) => {
+            return { ...prev, username: event.target.value };
+          })
+        }
+      />
+      {error && <p>{error}</p>}
       <Button onClick={() => onHandlePlay()} text="Play" />
-      <Button text="Create a private room" />
     </Card>
   );
 };
