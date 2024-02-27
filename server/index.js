@@ -15,6 +15,8 @@ server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
+let interval; // For the timer
+
 io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
   //  Timer
   const runTimer = () => {
@@ -82,12 +84,12 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
   };
 
   connection.on(SOCKET_EVENTS.JOIN, ({ username }, callback) => {
-    const { error, user } = game.addUser(socket.id, username);
+    const { error, user } = game.addUser(connection.id, username);
     if (error) {
       return callback({ error });
     }
     //  Notify clients
-    socket.broadcast.emit(SOCKET_EVENTS.ADD_USER, user);
+    connection.broadcast.emit(SOCKET_EVENTS.ADD_USER, user);
     const allUsers = game.getAllUsers();
     callback({ allUsers });
   });
@@ -110,17 +112,17 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
         //  If a game is on
         const drawer = game.getUser(game.drawerId);
         if (game.word !== "") {
-          socket.emit(SOCKET_EVENTS.GUESS, {
+          connection.emit(SOCKET_EVENTS.GUESS, {
             message: `${drawer.username} is drawing now!`,
             color: "purple",
           });
-          socket.emit(SOCKET_EVENTS.DRAWING, { drawing: game.drawing });
-          socket.emit(SOCKET_EVENTS.DRAWER, {
+          connection.emit(SOCKET_EVENTS.DRAWING, { drawing: game.drawing });
+          connection.emit(SOCKET_EVENTS.DRAWER, {
             id: game.drawerId,
             newWord: game.word,
           });
         } else {
-          socket.emit(SOCKET_EVENTS.GUESS, {
+          connection.emit(SOCKET_EVENTS.GUESS, {
             message: `${drawer.username} is choosing a word now!`,
             color: "brown",
           });
@@ -136,17 +138,23 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
   });
 
   //  Drawing
-  socket.on(SOCKET_EVENTS.CLEAR, () => {
-    socket.broadcast.emit(SOCKET_EVENTS.CLEAR);
+  connection.on(SOCKET_EVENTS.CLEAR, () => {
+    connection.broadcast.emit(SOCKET_EVENTS.CLEAR);
     game.resetDrawing();
   });
-  socket.on(SOCKET_EVENTS.DRAW_DATA, ({ x1, y1, x2, y2, color }) => {
-    socket.broadcast.emit(SOCKET_EVENTS.DRAW_DATA, { x1, y1, x2, y2, color });
+  connection.on(SOCKET_EVENTS.DRAW_DATA, ({ x1, y1, x2, y2, color }) => {
+    connection.broadcast.emit(SOCKET_EVENTS.DRAW_DATA, {
+      x1,
+      y1,
+      x2,
+      y2,
+      color,
+    });
     game.addDrawData({ x: x1, y: y1 }, { x: x2, y: y2 }, color);
   });
 
   //  When drawer chooses a word
-  socket.on(SOCKET_EVENTS.CHOOSE_WORD, (word) => {
+  connection.on(SOCKET_EVENTS.CHOOSE_WORD, (word) => {
     game.word = word;
 
     const drawer = game.getUser(game.drawerId);
@@ -161,11 +169,11 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
   });
 
   //  User makes a guess
-  socket.on(SOCKET_EVENTS.GUESS, (guess) => {
-    const user = game.getUser(socket.id);
+  connection.on(SOCKET_EVENTS.GUESS, (guess) => {
+    const user = game.getUser(connection.id);
 
-    if (socket.id !== game.drawerId) {
-      const index = game.guessedUsers.findIndex((u) => u.id === socket.id);
+    if (connection.id !== game.drawerId) {
+      const index = game.guessedUsers.findIndex((u) => u.id === connection.id);
 
       //  Already guessed the word
       if (index != -1) {
@@ -219,17 +227,17 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
             }
           }
           if (misMatch === 1) {
-            socket.broadcast.emit(SOCKET_EVENTS.GUESS, {
+            connection.broadcast.emit(SOCKET_EVENTS.GUESS, {
               sender: user.username,
               message: guess,
               color: "black",
             });
-            socket.emit(SOCKET_EVENTS.GUESS, {
+            connection.emit(SOCKET_EVENTS.GUESS, {
               sender: user.username,
               message: guess,
               color: "black",
             });
-            socket.emit(SOCKET_EVENTS.GUESS, {
+            connection.emit(SOCKET_EVENTS.GUESS, {
               message: `${guess} is close`,
               color: "green",
             });
@@ -258,10 +266,10 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
   });
 
   //  On user disconnect
-  socket.on(SOCKET_EVENTS.DISCONNECT, () => {
-    const user = game.getUser(socket.id);
+  connection.on(SOCKET_EVENTS.DISCONNECT, () => {
+    const user = game.getUser(connection.id);
     if (user) {
-      socket.broadcast.emit(SOCKET_EVENTS.REMOVE_USER, user);
+      connection.broadcast.emit(SOCKET_EVENTS.REMOVE_USER, user);
       io.emit(SOCKET_EVENTS.GUESS, {
         message: `${user.username} left.`,
         color: "red",
@@ -298,7 +306,7 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
           game.resetGuessedUsers();
         }
       }
-      game.removeUser(socket.id);
+      game.removeUser(connection.id);
       game.resetDrawing();
 
       //  Check if all have guessed
