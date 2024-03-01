@@ -1,16 +1,26 @@
 .guesses {
   width: 40%;
-  height: 600px;
-  background-color: var(--color-white);
   margin-left: var(--spacing-medium);
+}
+
+.guesses__list {
   border-radius: var(--border-radius-10);
+  height: 500px;
+  background-color: var(--color-white);
   overflow-y: scroll;
+  margin-bottom: var(--spacing-medium);
 }
 
 .guess__item {
   display: flex;
   padding: 0 var(--spacing-small-l);
   border: 1px solid var(--color-grey-black);
+}
+
+.guess__input {
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .guess__item p {

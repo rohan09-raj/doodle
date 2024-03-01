@@ -34,6 +34,7 @@ const Login = ({ socketRef, setGame }) => {
   return (
     <Card>
       <Input
+        placeholder="Enter your name"
         onInput={(event) =>
           setUser((prev) => {
             return { ...prev, username: event.target.value };

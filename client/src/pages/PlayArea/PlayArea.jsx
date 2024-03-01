@@ -44,9 +44,25 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
 
     socketRef.current.on(SOCKET_EVENTS.DRAWER, ({ id, newWord }) => {
       setDrawerId(id);
-      // setWord(newWord)
-      // setScoredUsers([])
-      // setCanvasStatus('canvas')
+      setWord(newWord);
+      setScoredUsers([]);
+      setCanvasStatus("canvas");
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.CHOOSE_WORD, (words) => {
+      setWords(words);
+      setCanvasStatus("words");
+      setFinalScores([]);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.DRAWING, ({ drawing }) => {
+      setDrawing(drawing);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.UPDATE_SCORE, (u) => {
+      setUsers((prev) => {
+        return prev.map((el) => (el.id === u.id ? u : el));
+      });
     });
 
     socketRef.current.on(SOCKET_EVENTS.TIMER, (counter) => {
@@ -59,6 +75,45 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
 
     socketRef.current.on(SOCKET_EVENTS.ROUNDS, (round) => {
       setRounds(round);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.GUESS, (guess) => {
+      setGuessList((prev) => [...prev, guess]);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.END_GAME, (allUsers) => {
+      setFinalScores(
+        allUsers.sort((a, b) => {
+          return a.score >= b.score ? -1 : 1;
+        })
+      );
+      setCanvasStatus("endgame");
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.END, (scoredUsers) => {
+      setCanvasStatus("end");
+      setScoredUsers(scoredUsers);
+      setDrawing([]);
+      setTime("-");
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.RESET, () => {
+      setUsers((prev) => {
+        return prev.map((el) => {
+          return {
+            ...el,
+            score: 0,
+          };
+        });
+      });
+      setTime("-");
+      setGuessList([]);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.REMOVE_USER, (u) => {
+      setUsers((prev) => {
+        return prev.filter((el) => el.id !== u.id);
+      });
     });
   }, []);
 
