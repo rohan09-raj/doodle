@@ -1,4 +1,4 @@
-.history {
+.guesses {
   width: 40%;
   height: 600px;
   background-color: var(--color-white);
@@ -7,13 +7,13 @@
   overflow-y: scroll;
 }
 
-.history__item {
+.guess__item {
   display: flex;
   padding: 0 var(--spacing-small-l);
   border: 1px solid var(--color-grey-black);
 }
 
-.history__item p {
+.guess__item p {
   font-size: var(--font-small);
   font-weight: 400;
 }

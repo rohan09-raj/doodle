@@ -1,25 +1,30 @@
-import useWebSocket from "react-use-websocket";
-
-import event from "../../utils/event.js";
-import { WS_URL } from "../../constants/constants.js";
-
+import PropTypes from "prop-types";
+import { MdModeEdit } from "react-icons/md";
 import styles from "./Users.module.css";
 
-const Users = () => {
-  const { lastJsonMessage } = useWebSocket(WS_URL, {
-    share: true,
-    filter: event.isUserEvent,
-  });
-  const users = Object.values(lastJsonMessage?.data.users || {});
+const Users = ({ users, user, drawerId }) => {
+  const selfUser = user[0];
+  const getPlayerName = (username) => {
+    console.log(selfUser.username, username, selfUser.username === username)
+    return username + (selfUser.username === username ? " (You)" : "");
+  };
+
   return (
     <div className={styles.users}>
-      {users.map((user) => (
-        <div className={styles.users__item} key={user.username}>
-          <p>{user.username}</p>
+      {users.map((user, index) => (
+        <div className={styles.users__item} key={index}>
+          <p>{getPlayerName(user.username)}</p>
+          {user.id === drawerId && <MdModeEdit size={20} />}
         </div>
       ))}
     </div>
   );
+};
+
+Users.propTypes = {
+  users: PropTypes.array,
+  user: PropTypes.array,
+  drawerId: PropTypes.string,
 };
 
 export default Users;

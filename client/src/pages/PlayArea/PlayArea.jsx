@@ -1,17 +1,64 @@
 import PropTypes from "prop-types";
 import Users from "../../components/Users/Users";
 import Canvas from "../../components/Canvas/Canvas";
-import History from "../../components/History/History";
-
+import Guesses from "../../components/Guesses/Guesses";
+import { getUnknownWord } from "../../utils/game";
 import styles from "./PlayArea.module.css";
-import { useEffect } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { SOCKET_EVENTS } from "../../constants/constants";
 import Card from "../../components/basic/Card/Card";
+import { UserContext } from "../../context/UserContext";
+import { UsersContext } from "../../context/UsersContext";
+import { GuessListContext } from "../../context/GuessListContext";
 
 const PlayArea = ({ socketRef, wait, setWait }) => {
+  const user = useContext(UserContext);
+  const [users, setUsers] = useContext(UsersContext);
+  const [finalScores, setFinalScores] = useState([]);
+  const [scoredUsers, setScoredUsers] = useState([]);
+  const [canvasStatus, setCanvasStatus] = useState("canvas");
+  const [drawerId, setDrawerId] = useState("");
+  const [drawing, setDrawing] = useState([]);
+  const [words, setWords] = useState([]);
+  const [word, setWord] = useState("_");
+  const [time, setTime] = useState("-");
+  const [rounds, setRounds] = useState(0);
+  const [totalRounds, setTotalRounds] = useState(0);
+  const [editOption, setEditOption] = useState("edit");
+  const [canvas, setCanvas] = useState(null);
+  const canvasParent = useRef(null);
+  const [guessList, setGuessList] = useContext(GuessListContext);
+
   useEffect(() => {
     socketRef.current.on(SOCKET_EVENTS.WAIT, (value) => {
       setWait(value);
+    });
+
+    socketRef.current.emit(SOCKET_EVENTS.JOINED, user.username);
+
+    socketRef.current.on(SOCKET_EVENTS.ADD_USER, (user) => {
+      setUsers((prev) => {
+        return [...prev, user];
+      });
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.DRAWER, ({ id, newWord }) => {
+      setDrawerId(id);
+      // setWord(newWord)
+      // setScoredUsers([])
+      // setCanvasStatus('canvas')
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.TIMER, (counter) => {
+      setTime(counter);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.TOTAL_ROUNDS, (totalRounds) => {
+      setTotalRounds(totalRounds);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.ROUNDS, (round) => {
+      setRounds(round);
     });
   }, []);
 
@@ -20,10 +67,19 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
       <h2>Waiting for players to join...</h2>
     </Card>
   ) : (
-    <div className={styles.area}>
-      <Users />
-      <Canvas />
-      <History />
+    <div>
+      <div className={styles.game}>
+        <h1 className="timer">{`${time} seconds left`}</h1>
+        <h1 className="rounds">{`${rounds} / ${totalRounds}`}</h1>
+        <h1 className="word">
+          {socketRef.current.id === drawerId ? word : getUnknownWord(word)}
+        </h1>
+      </div>
+      <div className={styles.area}>
+        <Users users={users} user={user} drawerId={drawerId} />
+        <Canvas />
+        <Guesses socketRef={socketRef} />
+      </div>
     </div>
   );
 };

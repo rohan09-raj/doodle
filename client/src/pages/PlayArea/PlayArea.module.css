@@ -1,4 +1,13 @@
 .area {
-    display: flex;
-    margin-top: var(--spacing-medium-xl);
+  display: flex;
+  margin-top: var(--spacing-medium-xl);
+}
+
+.game {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-white);
+  border-radius: var(--border-radius-10);
+  justify-content: space-evenly;
+  padding: var(--spacing-small-l);
 }

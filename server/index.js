@@ -22,7 +22,7 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
   const runTimer = () => {
     var counter = 120;
     interval = setInterval(() => {
-      io.emit("timer", counter);
+      io.emit(SOCKET_EVENTS.TIMER, counter);
       if (counter === 0) {
         clearInterval(interval);
         io.emit(SOCKET_EVENTS.END, game.guessedUsers);

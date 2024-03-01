@@ -7,6 +7,7 @@ export const EVENT = {
 
 export const SOCKET_EVENTS = {
   CONNECTION: "connection",
+  TIMER: "timer",
   JOIN: "join",
   DISCONNECT: "disconnect",
   JOINED: "joined",
