@@ -4,12 +4,15 @@ import Canvas from "../../components/Canvas/Canvas";
 import Guesses from "../../components/Guesses/Guesses";
 import { getUnknownWord } from "../../utils/game";
 import styles from "./PlayArea.module.css";
-import { useContext, useEffect, useState, useRef } from "react";
-import { SOCKET_EVENTS } from "../../constants/constants";
+import { useContext, useEffect, useState } from "react";
+import { SOCKET_EVENTS, COLORS } from "../../constants/constants";
 import Card from "../../components/basic/Card/Card";
 import { UserContext } from "../../context/UserContext";
 import { UsersContext } from "../../context/UsersContext";
 import { GuessListContext } from "../../context/GuessListContext";
+import Words from "../../components/Words/Words";
+import ScoreBoard from "../../components/ScoreBoard/ScoreBoard";
+import FinalScoreCard from "../../components/FinalScoreCard/FinalScoreCard";
 
 const PlayArea = ({ socketRef, wait, setWait }) => {
   const user = useContext(UserContext);
@@ -25,8 +28,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
   const [rounds, setRounds] = useState(0);
   const [totalRounds, setTotalRounds] = useState(0);
   const [editOption, setEditOption] = useState("edit");
-  const [canvas, setCanvas] = useState(null);
-  const canvasParent = useRef(null);
+  const [color, setColor] = useState(COLORS[0]);
   const [guessList, setGuessList] = useContext(GuessListContext);
 
   useEffect(() => {
@@ -117,6 +119,38 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
     });
   }, []);
 
+  const handleWordSubmit = (w) => {
+    socketRef.current.emit(SOCKET_EVENTS.CHOOSE_WORD, w);
+    setWords([]);
+  };
+
+  const CanvasStatus = () => {
+    switch (canvasStatus) {
+      case "words":
+        return <Words words={words} handleWordSubmit={handleWordSubmit} />;
+      case "canvas":
+        return (
+          <Canvas
+            socketRef={socketRef}
+            drawerId={drawerId}
+            drawing={drawing}
+            setDrawing={setDrawing}
+            editOption={editOption}
+            setEditOption={setEditOption}
+            color={color}
+          />
+        );
+      case "end":
+        return (
+          <ScoreBoard word={word} users={users} scoredUsers={scoredUsers} />
+        );
+      case "endgame":
+        return <FinalScoreCard finalScores={finalScores} />;
+      default:
+        break;
+    }
+  };
+
   return wait ? (
     <Card>
       <h2>Waiting for players to join...</h2>
@@ -132,7 +166,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
       </div>
       <div className={styles.area}>
         <Users users={users} user={user} drawerId={drawerId} />
-        <Canvas />
+        <CanvasStatus />
         <Guesses socketRef={socketRef} />
       </div>
     </div>

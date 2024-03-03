@@ -5,7 +5,6 @@ import styles from "./Users.module.css";
 const Users = ({ users, user, drawerId }) => {
   const selfUser = user[0];
   const getPlayerName = (username) => {
-    console.log(selfUser.username, username, selfUser.username === username)
     return username + (selfUser.username === username ? " (You)" : "");
   };
 
