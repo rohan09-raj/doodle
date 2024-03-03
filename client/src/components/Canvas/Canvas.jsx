@@ -1,22 +1,22 @@
 import PropTypes from "prop-types";
 import { useRef, useEffect } from "react";
-import { MdModeEdit } from "react-icons/md";
-import { BsEraserFill } from "react-icons/bs";
-import { drawBackground, drawLine, clearCanvas } from "./handlers/handlers";
-import styles from "./Canvas.module.css";
-import IconButton from "../basic/IconButton/IconButton";
-import { SOCKET_EVENTS } from "../../constants/constants";
 
 const Canvas = ({
   socketRef,
   drawerId,
   drawing,
   setDrawing,
+  canvasParent,
+  drawBackground,
+  drawLine,
+  clearCanvas,
+  eraseCanvas,
+  setCanvas,
   editOption,
-  setEditOption,
   color,
 }) => {
   const canvasRef = useRef(null);
+  const editOptionRef = useRef(editOption);
   const colorRef = useRef(color);
   let mousedown = undefined;
 
@@ -24,24 +24,46 @@ const Canvas = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+
+    setCanvas(canvas);
+
+    if (canvasParent.current) {
+      let parentWidth = canvasParent.current.clientWidth;
+      let parentHeight = canvasParent.current.clientHeight;
+      let smaller = parentWidth < parentHeight ? parentWidth : parentHeight;
+      canvas.width = smaller;
+      canvas.height = smaller;
+    }
     drawBackground(ctx, canvas);
-    socketRef.current.on(
-      SOCKET_EVENTS.DRAW_DATA,
-      ({ x1, y1, x2, y2, color }) => {
-        const data = {
-          initial: {
-            x: x1,
-            y: y1,
-          },
-          final: {
-            x: x2,
-            y: y2,
-          },
-          color: color,
-        };
-        setDrawing((prev) => [...prev, data]);
-      }
-    );
+
+    //  Sockets
+    socketRef.current.on("draw", ({ color, mousedown, mousemove }) => {
+      drawLine(ctx, canvas, color, mousedown, mousemove);
+    });
+
+    socketRef.current.on("erase", ({ mousedown, mousemove }) => {
+      eraseCanvas(ctx, canvas, "white", mousedown, mousemove);
+    });
+
+    socketRef.current.on("clear", () => {
+      clearCanvas(ctx, canvas);
+      setDrawing([]);
+    });
+
+    socketRef.current.on("drawData", ({ x1, y1, x2, y2, color }) => {
+      const data = {
+        initial: {
+          x: x1,
+          y: y1,
+        },
+        final: {
+          x: x2,
+          y: y2,
+        },
+        color: color,
+      };
+      setDrawing((prev) => [...prev, data]);
+    });
   }, [socketRef]);
 
   //  Drawerid useeffect
@@ -55,7 +77,8 @@ const Canvas = ({
   //  Color / Edit Option change useEffect
   useEffect(() => {
     colorRef.current = color;
-  }, [color]);
+    editOptionRef.current = editOption;
+  }, [color, editOption]);
 
   //  On drawing
   useEffect(() => {
@@ -63,7 +86,14 @@ const Canvas = ({
     const ctx = canvas.getContext("2d");
     drawImage(ctx, canvas);
 
-    window.addEventListener("resize", () => {
+    window.addEventListener("resize", (e) => {
+      if (canvasParent.current) {
+        let parentWidth = canvasParent.current.clientWidth;
+        let parentHeight = canvasParent.current.clientHeight;
+        let smaller = parentWidth < parentHeight ? parentWidth : parentHeight;
+        canvas.width = smaller;
+        canvas.height = smaller;
+      }
       drawBackground(canvas.getContext("2d"), canvas);
       drawImage(canvas.getContext("2d"), canvas);
     });
@@ -82,9 +112,9 @@ const Canvas = ({
         y: element.final.y * canvas.height,
       };
       if (final.x && final.y) {
-        drawLine(ctx, element.color, initial, final);
+        drawLine(ctx, canvas, element.color, initial, final);
       } else {
-        drawLine(ctx, element.color, initial);
+        drawLine(ctx, canvas, element.color, initial);
       }
     });
   };
@@ -97,102 +127,123 @@ const Canvas = ({
     canvas.addEventListener("pointerleave", (e) => mouseUpHandler(e, context));
     canvas.addEventListener("pointercancel", (e) => mouseUpHandler(e, context));
   };
+  // const removeListeners = (canvas, context) => {
+  //     canvas.removeEventListener('pointerdown', e => mouseDownHandler(e, context))
+  //     canvas.removeEventListener('pointermove', e => mouseMoveHandler(e, context))
+  //     canvas.removeEventListener('pointerup', e => mouseUpHandler(e, context))
+  //     canvas.removeEventListener('pointerleave', e => mouseUpHandler(e, context))
+  //     canvas.removeEventListener('pointercancel', e => mouseUpHandler(e, context))
+  // }
 
   //  Event handlers
-  const mouseMoveHandler = (e) => {
+  const mouseMoveHandler = (e, context) => {
     if (mousedown) {
       let mousemove = {
         x: e.offsetX,
         y: e.offsetY,
       };
       const canvas = canvasRef.current;
-      const data = {
-        initial: {
-          x: mousedown.x / canvas.width,
-          y: mousedown.y / canvas.height,
-        },
-        final: {
-          x: mousemove.x / canvas.width,
-          y: mousemove.y / canvas.height,
-        },
-        color: colorRef.current,
-      };
-      setDrawing((prev) => [...prev, data]);
-      socketRef.current.emit(SOCKET_EVENTS.DRAW_DATA, {
-        x1: data.initial.x,
-        y1: data.initial.y,
-        x2: data.final.x,
-        y2: data.final.y,
-        color: colorRef.current,
-      });
+      // draw line
+      if (editOptionRef.current === "edit") {
+        // drawLine(context, canvas, colorRef.current, mousedown, mousemove)
+        const data = {
+          initial: {
+            x: mousedown.x / canvas.width,
+            y: mousedown.y / canvas.height,
+          },
+          final: {
+            x: mousemove.x / canvas.width,
+            y: mousemove.y / canvas.height,
+          },
+          color: colorRef.current,
+        };
+        setDrawing((prev) => [...prev, data]);
+        socketRef.current.emit("drawData", {
+          x1: data.initial.x,
+          y1: data.initial.y,
+          x2: data.final.x,
+          y2: data.final.y,
+          color: colorRef.current,
+        });
+      } else {
+        // drawLine(context, canvasRef.current, 'white', mousedown, mousemove)
+        const data = {
+          initial: {
+            x: mousedown.x / canvas.width,
+            y: mousedown.y / canvas.height,
+          },
+          final: {
+            x: mousemove.x / canvas.width,
+            y: mousemove.y / canvas.height,
+          },
+          color: "white",
+        };
+        setDrawing((prev) => [...prev, data]);
+        socketRef.current.emit("drawData", {
+          x1: data.initial.x,
+          y1: data.initial.y,
+          x2: data.final.x,
+          y2: data.final.y,
+          color: "white",
+        });
+      }
 
       mousedown = mousemove;
     }
   };
-
-  const mouseDownHandler = (e) => {
+  const mouseDownHandler = (e, context) => {
     mousedown = {
       x: e.offsetX,
       y: e.offsetY,
     };
     const canvas = canvasRef.current;
-    const data = {
-      initial: {
-        x: mousedown.x / canvas.width,
-        y: mousedown.y / canvas.height,
-      },
-      final: {},
-      color: colorRef.current,
-    };
-    setDrawing((prev) => [...prev, data]);
-    socketRef.current.emit(SOCKET_EVENTS.DRAW_DATA, {
-      x1: data.initial.x,
-      y1: data.initial.y,
-      color: colorRef.current,
-    });
+    if (editOptionRef.current === "edit") {
+      // drawLine(context, canvas, colorRef.current, mousedown)
+      const data = {
+        initial: {
+          x: mousedown.x / canvas.width,
+          y: mousedown.y / canvas.height,
+        },
+        final: {},
+        color: colorRef.current,
+      };
+      setDrawing((prev) => [...prev, data]);
+      socketRef.current.emit("drawData", {
+        x1: data.initial.x,
+        y1: data.initial.y,
+        color: colorRef.current,
+      });
+    } else {
+      // drawLine(context, canvasRef.current, 'white', mousedown)
+      const data = {
+        initial: {
+          x: mousedown.x / canvas.width,
+          y: mousedown.y / canvas.height,
+        },
+        final: {},
+        color: "white",
+      };
+      setDrawing((prev) => [...prev, data]);
+      socketRef.current.emit("drawData", {
+        x1: data.initial.x,
+        y1: data.initial.y,
+        color: "white",
+      });
+    }
   };
-
-  const mouseUpHandler = () => {
+  const mouseUpHandler = (e, context) => {
     mousedown = undefined;
   };
 
-  const handleClear = (canvas) => {
-    if (socketRef.current.id === drawerId) {
-      clearCanvas(canvas.getContext("2d"), canvas);
-      setDrawing([]);
-      socketRef.current.emit(SOCKET_EVENTS.CLEAR);
-    }
-  };
-
+  //  Render
   return (
-    <div className={styles.canvas}>
-      <div className={styles.canvas__stage}>
-        <canvas
-          height={500}
-          width={700}
-          ref={canvasRef}
-          style={{
-            cursor: "url(/icons/cursor.svg) 5 5, crosshair",
-          }}
-        />
-      </div>
-      <div className={styles.canvas__controls}>
-        <IconButton
-          isSelected={editOption === "edit"}
-          icon={<MdModeEdit size={20} />}
-          onClick={() => {
-            setEditOption("edit");
-          }}
-        />
-
-        <IconButton
-          icon={<BsEraserFill size={20} />}
-          onClick={() => {
-            handleClear(canvasRef.current);
-          }}
-        />
-      </div>
-    </div>
+    <canvas
+      ref={canvasRef}
+      id="canvas"
+      style={{
+        cursor: "url(./Cursor/edit5.svg) 5 5, crosshair",
+      }}
+    />
   );
 };
 
@@ -207,6 +258,10 @@ Canvas.propTypes = {
   setEditOption: PropTypes.func,
   color: PropTypes.string,
   options: PropTypes.array,
+  drawBackground: PropTypes.func,
+  drawLine: PropTypes.func,
+  clearCanvas: PropTypes.func,
+  eraseCanvas: PropTypes.func
 };
 
 export default Canvas;

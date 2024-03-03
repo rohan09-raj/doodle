@@ -3,17 +3,16 @@ import { MdModeEdit } from "react-icons/md";
 import styles from "./Users.module.css";
 
 const Users = ({ users, user, drawerId }) => {
-  const selfUser = user[0];
   const getPlayerName = (username) => {
-    return username + (selfUser.username === username ? " (You)" : "");
+    return username + (user.username === username ? " (You)" : "");
   };
 
   return (
     <div className={styles.users}>
-      {users.map((user, index) => (
+      {users.map((u, index) => (
         <div className={styles.users__item} key={index}>
-          <p>{getPlayerName(user.username)}</p>
-          {user.id === drawerId && <MdModeEdit size={20} />}
+          <p>{getPlayerName(u.username)}</p>
+          {u.id === drawerId && <MdModeEdit size={20} />}
         </div>
       ))}
     </div>
