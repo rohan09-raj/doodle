@@ -1,5 +1,6 @@
 .area {
   display: flex;
+  flex-direction: column;
   margin-top: var(--spacing-medium-xl);
 }
 
@@ -10,4 +11,8 @@
   border-radius: var(--border-radius-10);
   justify-content: space-evenly;
   padding: var(--spacing-small-l);
+}
+
+.canvas__area {
+  display: flex;
 }

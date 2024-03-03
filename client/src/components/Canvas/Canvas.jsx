@@ -1,108 +1,267 @@
-import { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Line } from "react-konva";
-import { MdModeEdit } from "react-icons/md";
-import { BsEraserFill } from "react-icons/bs";
+import PropTypes from "prop-types";
+import { useRef, useEffect } from "react";
 
-import styles from "./Canvas.module.css";
-import IconButton from "../basic/IconButton/IconButton";
+const Canvas = ({
+  socketRef,
+  drawerId,
+  drawing,
+  setDrawing,
+  canvasParent,
+  drawBackground,
+  drawLine,
+  clearCanvas,
+  eraseCanvas,
+  setCanvas,
+  editOption,
+  color,
+}) => {
+  const canvasRef = useRef(null);
+  const editOptionRef = useRef(editOption);
+  const colorRef = useRef(color);
+  let mousedown = undefined;
 
-const Canvas = () => {
-  const [tool, setTool] = useState("pen");
-  const [lines, setLines] = useState([]);
-  const isDrawing = useRef(false);
-
+  //  Main useeffect
   useEffect(() => {
-    setLines([]);
-  }, []);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-  const handleLineChange = () => {
-    // sendJsonMessage({
-    //   type: EVENT.DRAW,
-    //   content: lines,
-    // });
-  };
+    setCanvas(canvas);
 
-  const handleClear = () => {
-    setLines([]);
-    // sendJsonMessage({
-    //   type: EVENT.DRAW,
-    //   content: [],
-    // });
-  };
-
-  const handleMouseDown = (e) => {
-    isDrawing.current = true;
-    const pos = e.target.getStage().getPointerPosition();
-    setLines([...lines, { tool, points: [pos.x, pos.y] }]);
-  };
-
-  const handleMouseMove = (e) => {
-    // no drawing - skipping
-    if (!isDrawing.current) {
-      return;
+    if (canvasParent.current) {
+      let parentWidth = canvasParent.current.clientWidth;
+      let parentHeight = canvasParent.current.clientHeight;
+      let smaller = parentWidth < parentHeight ? parentWidth : parentHeight;
+      canvas.width = smaller;
+      canvas.height = smaller;
     }
-    const stage = e.target.getStage();
-    const point = stage.getPointerPosition();
-    let lastLine = lines[lines.length - 1];
-    // add point
-    lastLine.points = lastLine.points.concat([point.x, point.y]);
+    drawBackground(ctx, canvas);
 
-    // replace last
-    lines.splice(lines.length - 1, 1, lastLine);
-    setLines(lines.concat());
+    //  Sockets
+    socketRef.current.on("draw", ({ color, mousedown, mousemove }) => {
+      drawLine(ctx, canvas, color, mousedown, mousemove);
+    });
+
+    socketRef.current.on("erase", ({ mousedown, mousemove }) => {
+      eraseCanvas(ctx, canvas, "white", mousedown, mousemove);
+    });
+
+    socketRef.current.on("clear", () => {
+      clearCanvas(ctx, canvas);
+      setDrawing([]);
+    });
+
+    socketRef.current.on("drawData", ({ x1, y1, x2, y2, color }) => {
+      const data = {
+        initial: {
+          x: x1,
+          y: y1,
+        },
+        final: {
+          x: x2,
+          y: y2,
+        },
+        color: color,
+      };
+      setDrawing((prev) => [...prev, data]);
+    });
+  }, [socketRef]);
+
+  //  Drawerid useeffect
+  useEffect(() => {
+    if (socketRef.current.id === drawerId) {
+      setEventListeners(canvasRef.current, canvasRef.current.getContext("2d"));
+      canvasRef.current.style.touchAction = "none";
+    }
+  }, [socketRef, drawerId]);
+
+  //  Color / Edit Option change useEffect
+  useEffect(() => {
+    colorRef.current = color;
+    editOptionRef.current = editOption;
+  }, [color, editOption]);
+
+  //  On drawing
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    drawImage(ctx, canvas);
+
+    window.addEventListener("resize", (e) => {
+      if (canvasParent.current) {
+        let parentWidth = canvasParent.current.clientWidth;
+        let parentHeight = canvasParent.current.clientHeight;
+        let smaller = parentWidth < parentHeight ? parentWidth : parentHeight;
+        canvas.width = smaller;
+        canvas.height = smaller;
+      }
+      drawBackground(canvas.getContext("2d"), canvas);
+      drawImage(canvas.getContext("2d"), canvas);
+    });
+  }, [drawing]);
+
+  //  Draw complete
+  const drawImage = (ctx, canvas) => {
+    clearCanvas(ctx, canvas);
+    drawing.forEach((element) => {
+      const initial = {
+        x: element.initial.x * canvas.width,
+        y: element.initial.y * canvas.height,
+      };
+      const final = {
+        x: element.final.x * canvas.width,
+        y: element.final.y * canvas.height,
+      };
+      if (final.x && final.y) {
+        drawLine(ctx, canvas, element.color, initial, final);
+      } else {
+        drawLine(ctx, canvas, element.color, initial);
+      }
+    });
   };
 
-  const handleMouseUp = () => {
-    isDrawing.current = false;
-    handleLineChange();
+  //  Set and remove pointer event listeners
+  const setEventListeners = (canvas, context) => {
+    canvas.addEventListener("pointerdown", (e) => mouseDownHandler(e, context));
+    canvas.addEventListener("pointermove", (e) => mouseMoveHandler(e, context));
+    canvas.addEventListener("pointerup", (e) => mouseUpHandler(e, context));
+    canvas.addEventListener("pointerleave", (e) => mouseUpHandler(e, context));
+    canvas.addEventListener("pointercancel", (e) => mouseUpHandler(e, context));
+  };
+  // const removeListeners = (canvas, context) => {
+  //     canvas.removeEventListener('pointerdown', e => mouseDownHandler(e, context))
+  //     canvas.removeEventListener('pointermove', e => mouseMoveHandler(e, context))
+  //     canvas.removeEventListener('pointerup', e => mouseUpHandler(e, context))
+  //     canvas.removeEventListener('pointerleave', e => mouseUpHandler(e, context))
+  //     canvas.removeEventListener('pointercancel', e => mouseUpHandler(e, context))
+  // }
+
+  //  Event handlers
+  const mouseMoveHandler = (e, context) => {
+    if (mousedown) {
+      let mousemove = {
+        x: e.offsetX,
+        y: e.offsetY,
+      };
+      const canvas = canvasRef.current;
+      // draw line
+      if (editOptionRef.current === "edit") {
+        // drawLine(context, canvas, colorRef.current, mousedown, mousemove)
+        const data = {
+          initial: {
+            x: mousedown.x / canvas.width,
+            y: mousedown.y / canvas.height,
+          },
+          final: {
+            x: mousemove.x / canvas.width,
+            y: mousemove.y / canvas.height,
+          },
+          color: colorRef.current,
+        };
+        setDrawing((prev) => [...prev, data]);
+        socketRef.current.emit("drawData", {
+          x1: data.initial.x,
+          y1: data.initial.y,
+          x2: data.final.x,
+          y2: data.final.y,
+          color: colorRef.current,
+        });
+      } else {
+        // drawLine(context, canvasRef.current, 'white', mousedown, mousemove)
+        const data = {
+          initial: {
+            x: mousedown.x / canvas.width,
+            y: mousedown.y / canvas.height,
+          },
+          final: {
+            x: mousemove.x / canvas.width,
+            y: mousemove.y / canvas.height,
+          },
+          color: "white",
+        };
+        setDrawing((prev) => [...prev, data]);
+        socketRef.current.emit("drawData", {
+          x1: data.initial.x,
+          y1: data.initial.y,
+          x2: data.final.x,
+          y2: data.final.y,
+          color: "white",
+        });
+      }
+
+      mousedown = mousemove;
+    }
+  };
+  const mouseDownHandler = (e, context) => {
+    mousedown = {
+      x: e.offsetX,
+      y: e.offsetY,
+    };
+    const canvas = canvasRef.current;
+    if (editOptionRef.current === "edit") {
+      // drawLine(context, canvas, colorRef.current, mousedown)
+      const data = {
+        initial: {
+          x: mousedown.x / canvas.width,
+          y: mousedown.y / canvas.height,
+        },
+        final: {},
+        color: colorRef.current,
+      };
+      setDrawing((prev) => [...prev, data]);
+      socketRef.current.emit("drawData", {
+        x1: data.initial.x,
+        y1: data.initial.y,
+        color: colorRef.current,
+      });
+    } else {
+      // drawLine(context, canvasRef.current, 'white', mousedown)
+      const data = {
+        initial: {
+          x: mousedown.x / canvas.width,
+          y: mousedown.y / canvas.height,
+        },
+        final: {},
+        color: "white",
+      };
+      setDrawing((prev) => [...prev, data]);
+      socketRef.current.emit("drawData", {
+        x1: data.initial.x,
+        y1: data.initial.y,
+        color: "white",
+      });
+    }
+  };
+  const mouseUpHandler = (e, context) => {
+    mousedown = undefined;
   };
 
+  //  Render
   return (
-    <div className={styles.canvas}>
-      <div className={styles.canvas__stage}>
-        <Stage
-          width={window.innerWidth / 2}
-          height={window.innerHeight / 2}
-          onMouseDown={handleMouseDown}
-          onMousemove={handleMouseMove}
-          onMouseup={handleMouseUp}
-        >
-          <Layer>
-            {lines.map((line, i) => (
-              <Line
-                key={i}
-                points={line.points}
-                stroke="#df4b26"
-                strokeWidth={5}
-                tension={0.5}
-                lineCap="round"
-                lineJoin="round"
-                globalCompositeOperation={
-                  line.tool === "eraser" ? "destination-out" : "source-over"
-                }
-              />
-            ))}
-          </Layer>
-        </Stage>
-      </div>
-      <div className={styles.canvas__controls}>
-        <IconButton
-          isSelected={tool === "pen"}
-          icon={<MdModeEdit size={20} />}
-          onClick={() => {
-            setTool("pen");
-          }}
-        />
-
-        <IconButton
-          icon={<BsEraserFill size={20} />}
-          onClick={() => {
-            handleClear();
-          }}
-        />
-      </div>
-    </div>
+    <canvas
+      ref={canvasRef}
+      id="canvas"
+      style={{
+        cursor: "url(./Cursor/edit5.svg) 5 5, crosshair",
+      }}
+    />
   );
+};
+
+Canvas.propTypes = {
+  socketRef: PropTypes.object,
+  drawerId: PropTypes.string,
+  drawing: PropTypes.array,
+  setDrawing: PropTypes.func,
+  canvasParent: PropTypes.object,
+  setCanvas: PropTypes.func,
+  editOption: PropTypes.string,
+  setEditOption: PropTypes.func,
+  color: PropTypes.string,
+  options: PropTypes.array,
+  drawBackground: PropTypes.func,
+  drawLine: PropTypes.func,
+  clearCanvas: PropTypes.func,
+  eraseCanvas: PropTypes.func
 };
 
 export default Canvas;
