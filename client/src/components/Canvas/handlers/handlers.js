@@ -1,5 +1,3 @@
-let strokeColor = "black";
-
 export const drawBackground = (context, canvas) => {
   if (context) {
     context.fillStyle = "white";
@@ -7,7 +5,7 @@ export const drawBackground = (context, canvas) => {
   }
 };
 
-export const drawLine = (context, canvas, color, initial, final) => {
+export const drawLine = (context, color, initial, final) => {
   if (context) {
     if (final) {
       context.beginPath();
@@ -34,7 +32,7 @@ export const clearCanvas = (context, canvas) => {
   }
 };
 
-export const eraseCanvas = (context, canvas, color, initial, final) => {
+export const eraseCanvas = (context, canvas, initial, final) => {
   if (context) {
     if (final) {
       context.beginPath();
@@ -50,9 +48,6 @@ export const eraseCanvas = (context, canvas, color, initial, final) => {
       context.fillStyle = "white";
       context.fillRect(initial.x - 5, initial.y - 5, 10, 10);
     }
-    // socket.emit('draw', {initial, final})
     window.sessionStorage.setItem("drawing", canvas.toDataURL("image/svg"));
   }
 };
-
-export default strokeColor;

@@ -21,13 +21,11 @@ const Home = () => {
     <GuessListProvider>
       <div className={styles.home}>
         <h1 className={styles.home__heading}>Doodle</h1>
-        <div>
-          {game ? (
-            <PlayArea socketRef={socketRef} wait={wait} setWait={setWait} />
-          ) : (
-            <Login socketRef={socketRef} setGame={setGame} />
-          )}
-        </div>
+        {game ? (
+          <PlayArea socketRef={socketRef} wait={wait} setWait={setWait} />
+        ) : (
+          <Login socketRef={socketRef} setGame={setGame} />
+        )}
       </div>
     </GuessListProvider>
   );

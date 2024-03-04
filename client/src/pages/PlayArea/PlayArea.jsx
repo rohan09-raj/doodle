@@ -1,34 +1,30 @@
+import { useContext, useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import Users from "../../components/Users/Users";
+import Words from "../../components/Words/Words";
+import Card from "../../components/basic/Card/Card";
 import Canvas from "../../components/Canvas/Canvas";
 import Guesses from "../../components/Guesses/Guesses";
-import { getUnknownWord } from "../../utils/game";
-import styles from "./PlayArea.module.css";
-import { useContext, useEffect, useState, useRef } from "react";
-import { SOCKET_EVENTS, COLORS } from "../../constants/constants";
-import Card from "../../components/basic/Card/Card";
+import ScoreBoard from "../../components/ScoreBoard/ScoreBoard";
+import IconButton from "../../components/basic/IconButton/IconButton";
+import FinalScoreCard from "../../components/FinalScoreCard/FinalScoreCard";
+import { clearCanvas } from "../../components/Canvas/handlers/handlers";
 import { UserContext } from "../../context/UserContext";
 import { UsersContext } from "../../context/UsersContext";
 import { GuessListContext } from "../../context/GuessListContext";
-import Words from "../../components/Words/Words";
-import ScoreBoard from "../../components/ScoreBoard/ScoreBoard";
-import FinalScoreCard from "../../components/FinalScoreCard/FinalScoreCard";
-import {
-  clearCanvas,
-  drawBackground,
-  drawLine,
-  eraseCanvas,
-} from "../../components/Canvas/handlers/handlers";
-import IconButton from "../../components/basic/IconButton/IconButton";
+import { getUnknownWord } from "../../utils/game";
+import { SOCKET_EVENTS, COLORS, CANVAS_STATUS } from "../../constants/constants";
 import { MdModeEdit } from "react-icons/md";
 import { BsEraserFill } from "react-icons/bs";
+
+import styles from "./PlayArea.module.css";
 
 const PlayArea = ({ socketRef, wait, setWait }) => {
   const [users, setUsers] = useContext(UsersContext);
   const [user, setUser] = useContext(UserContext);
   const [finalScores, setFinalScores] = useState([]);
   const [scoredUsers, setScoredUsers] = useState([]);
-  const [canvasStatus, setCanvasStatus] = useState("canvas");
+  const [canvasStatus, setCanvasStatus] = useState(CANVAS_STATUS.CANVAS);
   const [drawerId, setDrawerId] = useState("");
   const [drawing, setDrawing] = useState([]);
   const [words, setWords] = useState([]);
@@ -43,75 +39,66 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
   const [guessList, setGuessList] = useContext(GuessListContext);
 
   useEffect(() => {
-    socketRef.current.emit("joined", user.username);
+    socketRef.current.emit(SOCKET_EVENTS.JOINED, user.username);
 
-    //  When a user joins
-    socketRef.current.on("addUser", (u) => {
+    socketRef.current.on(SOCKET_EVENTS.ADD_USER, (u) => {
       setUsers((prev) => {
         return [...prev, u];
       });
     });
 
-    //  Wait
-    socketRef.current.on("wait", (val) => {
+    socketRef.current.on(SOCKET_EVENTS.WAIT, (val) => {
       setWait(val);
     });
 
-    //  Update the score
-    socketRef.current.on("updateScore", (u) => {
+    socketRef.current.on(SOCKET_EVENTS.UPDATE_SCORE, (u) => {
       setUsers((prev) => {
         return prev.map((el) => (el.id === u.id ? u : el));
       });
     });
 
-    //  A guess is made
-    socketRef.current.on("guess", (g) => {
+    socketRef.current.on(SOCKET_EVENTS.GUESS, (g) => {
       setGuessList((prev) => [...prev, g]);
     });
 
-    //  Choose a word
-    socketRef.current.on("chooseWord", (words) => {
+    socketRef.current.on(SOCKET_EVENTS.CHOOSE_WORD, (words) => {
       setWords(words);
-      setCanvasStatus("words");
+      setCanvasStatus(CANVAS_STATUS.WORDS);
       setFinalScores([]);
     });
 
-    //  On drawing
-    socketRef.current.on("drawing", ({ drawing }) => {
+    socketRef.current.on(SOCKET_EVENTS.DRAWING, ({ drawing }) => {
       setDrawing(drawing);
     });
 
-    //  Timer
-    socketRef.current.on("timer", (counter) => {
+    socketRef.current.on(SOCKET_EVENTS.TIMER, (counter) => {
       setTime(counter);
     });
-    socketRef.current.on("end", (scoredUsers) => {
-      setCanvasStatus("end");
-      // setTurnEnd(true)
+    socketRef.current.on(SOCKET_EVENTS.END, (scoredUsers) => {
+      setCanvasStatus(CANVAS_STATUS.END);
       setScoredUsers(scoredUsers);
       setDrawing([]);
       setTime("-");
     });
 
-    //  Rounds
-    socketRef.current.on("total-rounds", (totalRounds) => {
+    socketRef.current.on(SOCKET_EVENTS.TOTAL_ROUNDS, (totalRounds) => {
       setTotalRounds(totalRounds);
     });
-    socketRef.current.on("rounds", (round) => {
+
+    socketRef.current.on(SOCKET_EVENTS.ROUNDS, (round) => {
       setRounds(round);
     });
-    socketRef.current.on("endgame", (allUsers) => {
+
+    socketRef.current.on(SOCKET_EVENTS.END_GAME, (allUsers) => {
       setFinalScores(
         allUsers.sort((a, b) => {
           return a.score >= b.score ? -1 : 1;
         })
       );
-      setCanvasStatus("endgame");
+      setCanvasStatus(CANVAS_STATUS.ENDGAME);
     });
 
-    //  Reset scores
-    socketRef.current.on("reset", () => {
-      //  Set scores to zero
+    socketRef.current.on(SOCKET_EVENTS.RESET, () => {
       setUsers((prev) => {
         return prev.map((el) => {
           return {
@@ -120,41 +107,34 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
           };
         });
       });
-
       setTime("-");
-
-      //  Set the guess list empty
       setGuessList([]);
     });
 
-    //  Drawer index
-    socketRef.current.on("drawer", ({ id, newWord }) => {
+    socketRef.current.on(SOCKET_EVENTS.DRAWER, ({ id, newWord }) => {
       setDrawerId(id);
       setWord(newWord);
       setScoredUsers([]);
-      setCanvasStatus("canvas");
-      // setTurnEnd(false)
+      setCanvasStatus(CANVAS_STATUS.CANVAS);
     });
 
-    //  When a user leaves
-    socketRef.current.on("removeUser", (u) => {
+    socketRef.current.on(SOCKET_EVENTS.REMOVE_USER, (u) => {
       setUsers((prev) => {
         return prev.filter((el) => el.id !== u.id);
       });
     });
   }, []);
 
-  //  Options handler
   const handleClear = () => {
     if (socketRef.current.id === drawerId) {
       clearCanvas(canvas.getContext("2d"), canvas);
       setDrawing([]);
-      socketRef.current.emit("clear");
+      socketRef.current.emit(SOCKET_EVENTS.CLEAR);
     }
   };
 
   const handleWordSubmit = (w) => {
-    socketRef.current.emit("chooseWord", w);
+    socketRef.current.emit(SOCKET_EVENTS.CHOOSE_WORD, w);
     setWords([]);
   };
 
@@ -221,10 +201,6 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
         drawing={drawing}
         setDrawing={setDrawing}
         drawerId={drawerId}
-        drawBackground={drawBackground}
-        drawLine={drawLine}
-        clearCanvas={clearCanvas}
-        eraseCanvas={eraseCanvas}
         setCanvas={setCanvas}
         editOption={editOption}
         color={color}
@@ -243,13 +219,13 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
 
   const renderCanvasStatus = () => {
     switch (canvasStatus) {
-      case "words":
+      case CANVAS_STATUS.WORDS:
         return renderWordOptions();
-      case "canvas":
+      case CANVAS_STATUS.CANVAS:
         return renderCanvas();
-      case "end":
+      case CANVAS_STATUS.END:
         return renderScoreBoard();
-      case "endgame":
+      case CANVAS_STATUS.ENDGAME:
         return renderFinalScores();
       default:
         break;
