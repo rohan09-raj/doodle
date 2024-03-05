@@ -1,0 +1,16 @@
+.board__heading {
+  text-align: center;
+  margin: 0 0 var(--spacing-small-l) 0;
+}
+
+.score {
+  display: flex;
+  font-size: var(--font-medium-s);
+  font-weight: 600;
+  text-align: center;
+}
+
+.score__username {
+  flex: 1;
+  font-weight: 700;
+}

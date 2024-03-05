@@ -258,7 +258,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
 
   return wait ? (
     <Card>
-      <h2>Waiting for players to join...</h2>
+      <h2 className={styles.wait}>Waiting for players to join...</h2>
     </Card>
   ) : (
     <div className={styles.area}>

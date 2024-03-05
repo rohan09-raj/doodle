@@ -1,20 +1,22 @@
 import PropTypes from "prop-types";
 import Card from "../basic/Card/Card";
 
+import styles from "./ScoreBoard.module.css";
+
 const ScoreBoard = ({ word, users, scoredUsers }) => {
   const renderScoreCard = (user, i) => {
     const index = scoredUsers.findIndex((u) => u === user.id);
     return (
-      <div key={i}>
-        <h5> {user.username} </h5>
-        <h5 style={{ color: "green" }}> {index === -1 ? 0 : 100} </h5>
-      </div>
+      <p key={i} className={styles.score}>
+        {user.username} -{" "}
+        <span className={styles.score__number}> {index === -1 ? 0 : 100} </span>
+      </p>
     );
   };
 
   return (
     <Card>
-      <h3> The word was : {word} </h3>
+      <h2 className={styles.board__heading}> The word was : {word} </h2>
       {users.map((user, index) => renderScoreCard(user, index))}
     </Card>
   );

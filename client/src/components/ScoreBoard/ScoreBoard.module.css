@@ -1,0 +1,13 @@
+.board__heading {
+  text-align: center;
+}
+
+.score {
+  font-size: var(--font-medium-s);
+  font-weight: 600;
+  text-align: center;
+}
+
+.score__number {
+  color: green;
+}

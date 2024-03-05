@@ -2,17 +2,17 @@ import PropTypes from "prop-types";
 import Card from "../basic/Card/Card";
 import Button from "../basic/Button/Button";
 
+import styles from "./Words.module.css";
+
 const Words = ({ words, handleWordSubmit }) => {
   return (
     <Card>
-      <h3>Choose a word !</h3>
-      <div className="word-options-container">
+      <h2 className={styles.words__heading}>Choose a word !</h2>
+      <div className={styles.words__options}>
         {words.map((word, index) => (
-          <Button
-            key={index}
-            text={word}
-            onClick={() => handleWordSubmit(word)}
-          />
+          <span key={index} className={styles.words__option}>
+            <Button text={word} onClick={() => handleWordSubmit(word)} />
+          </span>
         ))}
       </div>
     </Card>

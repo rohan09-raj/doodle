@@ -4,7 +4,7 @@ import Input from "../basic/Input/Input";
 import { GuessListContext } from "../../context/GuessListContext";
 import styles from "./Guesses.module.css";
 import IconButton from "../basic/IconButton/IconButton";
-import { BsFillSendFill } from "react-icons/bs";
+import { RiSendPlane2Fill } from "react-icons/ri";
 import { SOCKET_EVENTS } from "../../constants/constants";
 
 const Guesses = ({ socketRef }) => {
@@ -66,7 +66,7 @@ const Guesses = ({ socketRef }) => {
           onKeyUp={handleGuessSubmit}
         />
         <IconButton
-          icon={<BsFillSendFill size={24} />}
+          icon={<RiSendPlane2Fill size={28} />}
           isSelected="true"
           onClick={handleGuessSubmit}
         />

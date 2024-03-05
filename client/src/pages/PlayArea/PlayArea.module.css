@@ -1,3 +1,7 @@
+.wait {
+  text-align: center;
+}
+
 .area {
   display: flex;
   flex-direction: column;
@@ -9,10 +13,15 @@
 .game_details {
   display: flex;
   align-items: center;
+  justify-content: center;
   background-color: var(--color-white);
   border-radius: var(--border-radius-10);
-  justify-content: space-evenly;
   padding: var(--spacing-small-l);
+}
+
+.game_details h1 {
+  width: 33%;
+  text-align: center;
 }
 
 .game_interactions {
@@ -23,6 +32,9 @@
 
 .canvas {
   flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 50%;
   background-color: var(--color-grey-black);
   border-radius: var(--border-radius-10);
