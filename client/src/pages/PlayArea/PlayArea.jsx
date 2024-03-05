@@ -13,8 +13,12 @@ import { UserContext } from "../../context/UserContext";
 import { UsersContext } from "../../context/UsersContext";
 import { GuessListContext } from "../../context/GuessListContext";
 import { getUnknownWord } from "../../utils/game";
-import { SOCKET_EVENTS, COLORS, CANVAS_STATUS } from "../../constants/constants";
-import { MdModeEdit } from "react-icons/md";
+import {
+  SOCKET_EVENTS,
+  COLORS,
+  CANVAS_STATUS,
+} from "../../constants/constants";
+import { MdEditOff, MdModeEdit } from "react-icons/md";
 import { BsEraserFill } from "react-icons/bs";
 
 import styles from "./PlayArea.module.css";
@@ -74,6 +78,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
     socketRef.current.on(SOCKET_EVENTS.TIMER, (counter) => {
       setTime(counter);
     });
+
     socketRef.current.on(SOCKET_EVENTS.END, (scoredUsers) => {
       setCanvasStatus(CANVAS_STATUS.END);
       setScoredUsers(scoredUsers);
@@ -168,7 +173,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
   //  Render functions
   const renderOptions = () => {
     return (
-      <div className={styles.canvas__controls}>
+      <div className={styles.controls}>
         <IconButton
           isSelected={editOption === "edit"}
           icon={<MdModeEdit size={20} />}
@@ -177,7 +182,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
 
         <IconButton
           isSelected={editOption === "erase"}
-          icon={<MdModeEdit size={20} />}
+          icon={<MdEditOff size={25} />}
           onClick={options[1].handler}
         />
 
@@ -185,7 +190,26 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
           icon={<BsEraserFill size={20} />}
           onClick={options[2].handler}
         />
+
+        <div className={styles.colors}>
+          {COLORS.map((e, index) => renderColorBox(e, index))}
+        </div>
       </div>
+    );
+  };
+
+  const renderColorBox = (e, index) => {
+    return (
+      <button
+        key={index}
+        onClick={() => handleColorChange(e)}
+        className={`${styles.color__box} ${
+          e === color ? styles.color__box_active : ""
+        }`}
+        style={{
+          backgroundColor: `${e}`,
+        }}
+      ></button>
     );
   };
 
@@ -238,23 +262,25 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
     </Card>
   ) : (
     <div className={styles.area}>
-      <div className={styles.game}>
-        <h1 className="timer">{`${time} seconds left`}</h1>
-        <h1 className="rounds">{`${rounds} / ${totalRounds}`}</h1>
-        <h1 className="word">
+      <div className={styles.game_details}>
+        <h1 className={styles.timer}>{`${time} seconds left`}</h1>
+        <h1
+          className={styles.rounds}
+        >{`Rounds : ${rounds} / ${totalRounds}`}</h1>
+        <h1 className={styles.word}>
           {socketRef.current.id === drawerId ? word : getUnknownWord(word)}
         </h1>
       </div>
-      <div className={styles.canvas__area}>
+      <div className={styles.game_interactions}>
         <Users users={users} user={user} drawerId={drawerId} />
 
-        <div ref={canvasParent} className="canvas-container">
+        <div ref={canvasParent} className={styles.canvas}>
           {renderCanvasStatus()}
         </div>
 
         <Guesses socketRef={socketRef} />
       </div>
-      {renderOptions()}
+      {socketRef.current.id === drawerId ? renderOptions() : null}
     </div>
   );
 };
