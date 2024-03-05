@@ -40,6 +40,7 @@ const Login = ({ socketRef, setGame }) => {
             return { ...prev, username: event.target.value };
           })
         }
+        onKeyUp={() => onHandlePlay()}
       />
       {error && <p>{error}</p>}
       <Button onClick={() => onHandlePlay()} text="Play" />

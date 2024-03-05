@@ -33,7 +33,7 @@ const Guesses = ({ socketRef }) => {
     <div className={styles.guesses}>
       <div ref={guessListRef} className={styles.guesses__list}>
         {guessList.map((guess, index) => (
-          <div key={`activity-${index}`} className={styles.guess__item}>
+          <div key={index} className={styles.guess__item}>
             <p
               style={{
                 color: `${guess.color}`,
@@ -59,7 +59,12 @@ const Guesses = ({ socketRef }) => {
       </div>
 
       <div className={styles.guess__input}>
-        <Input placeholder="Enter your guess" onInput={handleGuessChange} />
+        <Input
+          value={guess}
+          placeholder="Enter your guess"
+          onInput={handleGuessChange}
+          onKeyUp={handleGuessSubmit}
+        />
         <IconButton
           icon={<BsFillSendFill size={24} />}
           isSelected="true"
