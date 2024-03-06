@@ -4,10 +4,12 @@ import Button from "../basic/Button/Button";
 
 import styles from "./Words.module.css";
 
-const Words = ({ words, handleWordSubmit }) => {
+const Words = ({ words, choosingWord, handleWordSubmit }) => {
   return (
     <Card>
-      <h2 className={styles.words__heading}>Choose a word !</h2>
+      <h2 className={styles.words__heading}>
+        {choosingWord ? choosingWord.message : "Choose a word !"}
+      </h2>
       <div className={styles.words__options}>
         {words.map((word, index) => (
           <span key={index} className={styles.words__option}>
@@ -21,6 +23,7 @@ const Words = ({ words, handleWordSubmit }) => {
 
 Words.propTypes = {
   words: PropTypes.array,
+  choosingWord: PropTypes.object,
   handleWordSubmit: PropTypes.func,
 };
 

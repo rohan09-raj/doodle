@@ -33,6 +33,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
   const [drawing, setDrawing] = useState([]);
   const [words, setWords] = useState([]);
   const [word, setWord] = useState("_");
+  const [choosingWord, setChoosingWord] = useState(null);
   const [time, setTime] = useState("-");
   const [rounds, setRounds] = useState(0);
   const [totalRounds, setTotalRounds] = useState(0);
@@ -69,6 +70,11 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
       setWords(words);
       setCanvasStatus(CANVAS_STATUS.WORDS);
       setFinalScores([]);
+    });
+
+    socketRef.current.on(SOCKET_EVENTS.CHOOSING_WORD, (message) => {
+      setChoosingWord(message);
+      setCanvasStatus(CANVAS_STATUS.WORDS);
     });
 
     socketRef.current.on(SOCKET_EVENTS.DRAWING, ({ drawing }) => {
@@ -141,6 +147,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
   const handleWordSubmit = (w) => {
     socketRef.current.emit(SOCKET_EVENTS.CHOOSE_WORD, w);
     setWords([]);
+    setChoosingWord(null);
   };
 
   const handleEditOption = () => {
@@ -234,7 +241,7 @@ const PlayArea = ({ socketRef, wait, setWait }) => {
   };
 
   const renderWordOptions = () => {
-    return <Words words={words} handleWordSubmit={handleWordSubmit} />;
+    return <Words words={words} choosingWord={choosingWord} handleWordSubmit={handleWordSubmit} />;
   };
 
   const renderFinalScores = () => {

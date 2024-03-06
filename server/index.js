@@ -20,7 +20,7 @@ let interval; // For the timer
 io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
   //  Timer
   const runTimer = () => {
-    var counter = 120;
+    var counter = 60;
     interval = setInterval(() => {
       io.emit(SOCKET_EVENTS.TIMER, counter);
       if (counter === 0) {
@@ -80,6 +80,13 @@ io.on(SOCKET_EVENTS.CONNECTION, function (connection) {
         color: "brown",
       });
       io.to(drawer.id).emit(SOCKET_EVENTS.CHOOSE_WORD, words);
+      game.users.forEach((user) => {
+        if (user.id !== drawer.id) {
+          io.to(user.id).emit(SOCKET_EVENTS.CHOOSING_WORD, {
+            message: `${drawer.username} is choosing a word now!`,
+          });
+        }
+      });
     }, time * 1000);
   };
 

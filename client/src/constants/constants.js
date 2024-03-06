@@ -15,6 +15,7 @@ export const SOCKET_EVENTS = {
   RESET: "reset",
   END_GAME: "endgame",
   CHOOSE_WORD: "chooseWord",
+  CHOOSING_WORD: "choosingWord",
   WAIT: "wait",
   DRAWING: "drawing",
   DRAWER: "drawer",

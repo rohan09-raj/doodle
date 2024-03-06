@@ -1,10 +1,5 @@
 export const PORT = 8000;
 
-export const EVENT_TYPES = {
-  USER_EVENT: "userevent",
-  CONTENT_CHANGE: "contentchange",
-};
-
 export const SOCKET_EVENTS = {
   CONNECTION: "connection",
   TIMER: "timer",
@@ -20,6 +15,7 @@ export const SOCKET_EVENTS = {
   RESET: "reset",
   END_GAME: "endgame",
   CHOOSE_WORD: "chooseWord",
+  CHOOSING_WORD: "choosingWord",
   WAIT: "wait",
   DRAWING: "drawing",
   DRAWER: "drawer",
